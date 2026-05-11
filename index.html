@@ -74,6 +74,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 17H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2h-2"/><path d="M9 17l3 3 3-3M12 12v8"/><path d="M8 9h8M8 13h4"/></svg>
         <span>Reportes</span>
       </button>
+      <button class="nav-item" data-view="tickets">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2h-1"/><path d="M8 6v12"/><path d="M6 18h10a2 2 0 002-2v-3a2 2 0 00-2-2H5a2 2 0 00-2 2v3a2 2 0 002 2h1"/><path d="M8 12h.01"/></svg>
+        <span>Tickets</span>
+      </button>
     </nav>
     <div class="sidebar-footer">
       <div class="date-display" id="currentDate"></div>
@@ -350,6 +354,33 @@
         </div>
       </section>
 
+      <!-- TICKETS VIEW -->
+      <section class="view" id="view-tickets">
+        <div class="view-toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="ticketSearch" placeholder="Buscar ticket por codigo, titulo o cliente...">
+          </div>
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-ticket-status="all">Todos</button>
+            <button class="filter-tab" data-ticket-status="atendidos">Atendidos</button>
+            <button class="filter-tab" data-ticket-status="abiertos">Abiertos</button>
+          </div>
+          <button class="btn-secondary" id="ticketsRefreshBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 0 1 15.5-6.5"/><path d="M21 3v6h-6"/><path d="M21 12a9 9 0 0 1-15.5 6.5"/><path d="M3 21v-6h6"/></svg>
+            Actualizar
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Tickets Atendidos</h3>
+            <span class="today-badge" id="ticketsMetaInfo"></span>
+          </div>
+          <div id="ticketsList" class="entries-list"></div>
+        </div>
+      </section>
+
     </div><!-- end view-container -->
   </main>
 
@@ -558,6 +589,25 @@
       </div>
 
       <div class="settings-section">
+        <p class="settings-section-title">Integracion de Tickets (Supabase externo)</p>
+        <p class="settings-desc">Conecta el proyecto de tickets para ver incidencias atendidas dentro de ProjectFlow.</p>
+        <div class="form-group">
+          <label>Project URL Tickets</label>
+          <input type="text" id="tkUrl" placeholder="https://kpefwyirteartbfxrusb.supabase.co">
+        </div>
+        <div class="form-group">
+          <label>Publishable Key Tickets</label>
+          <input type="text" id="tkKey" placeholder="sb_publishable_...">
+        </div>
+        <div class="settings-row" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-secondary" id="saveTicketsCfgBtn">Guardar Tickets</button>
+          <button class="btn-secondary" id="syncTicketsBtn">Cargar tickets</button>
+          <button class="btn-ghost" id="verifyTicketsBtn">Verificar conexion</button>
+        </div>
+        <p class="settings-desc" id="tkStatus"></p>
+      </div>
+
+      <div class="settings-section">
         <p class="settings-section-title">Notificaciones de entregas</p>
         <p class="settings-desc">Activa recordatorios de objetivos por vencer y prueba notificaciones al instante.</p>
         <div class="settings-row" style="display:flex;gap:8px;flex-wrap:wrap">
@@ -634,6 +684,7 @@
   <script src="js/projects.js"></script>
   <script src="js/daily.js"></script>
   <script src="js/reports.js"></script>
+  <script src="js/tickets.js"></script>
   <script src="js/data-utils.js"></script>
   <script src="js/ai-voice.js"></script>
   <script src="js/voice-automation.js"></script>

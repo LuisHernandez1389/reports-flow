@@ -1,7 +1,7 @@
 /* service-worker.js - ProjectFlow PWA */
 'use strict';
 
-const CACHE_VERSION = 'projectflow-v7';
+const CACHE_VERSION = 'projectflow-v8';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 const OFFLINE_URL = './offline.html';
@@ -18,6 +18,7 @@ const STATIC_ASSETS = [
   './js/projects.js',
   './js/daily.js',
   './js/reports.js',
+  './js/tickets.js',
   './js/data-utils.js',
   './js/ai-voice.js',
   './js/voice-automation.js',

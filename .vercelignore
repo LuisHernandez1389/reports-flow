@@ -1,0 +1,8 @@
+﻿clipflow-support/
+reports-flow/
+data/
+uploads/
+.git/
+.gitignore
+.vercel/
+*.log

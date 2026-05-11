@@ -15,7 +15,7 @@ const UI = (() => {
     if (target) target.classList.add('active');
     const navItem = document.querySelector(`.nav-item[data-view="${view}"]`);
     if (navItem) navItem.classList.add('active');
-    const titles = { dashboard:'Dashboard', projects:'Proyectos', daily:'Trabajo Diario', reports:'Reportes', 'project-detail':'Detalle de Proyecto' };
+    const titles = { dashboard:'Dashboard', projects:'Proyectos', daily:'Trabajo Diario', reports:'Reportes', tickets:'Tickets', 'project-detail':'Detalle de Proyecto' };
     document.getElementById('pageTitle').textContent = titles[view] || 'ProjectFlow';
     window._currentView = view;
     if (view !== 'project-detail') window._activeProjectId = null;

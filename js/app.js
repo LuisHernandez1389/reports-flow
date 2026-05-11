@@ -188,6 +188,7 @@ const App = (() => {
       projects: () => Projects.renderGrid(),
       daily: () => Daily.refresh(),
       reports: () => Reports.refresh(),
+      tickets: () => Tickets.refresh(),
       'project-detail': (id) => { if (id) { const p = DB.projects.getById(id); if (p) Projects.openDetail(id); } }
     };
 
@@ -195,6 +196,7 @@ const App = (() => {
     Projects.init();
     Daily.init();
     Reports.init();
+    if (window.Tickets?.init) Tickets.init();
     if (window.AIVoice?.init) AIVoice.init();
     if (window.VoiceAutomation?.init) VoiceAutomation.init();
     if (window.AIDescriptions?.init) AIDescriptions.init();
@@ -205,7 +207,7 @@ const App = (() => {
 
     // Allow deep-link opening from PWA shortcuts: ?view=projects|daily|reports
     const viewFromUrl = new URLSearchParams(window.location.search).get('view');
-    if (viewFromUrl && ['dashboard', 'projects', 'daily', 'reports'].includes(viewFromUrl)) {
+    if (viewFromUrl && ['dashboard', 'projects', 'daily', 'reports', 'tickets'].includes(viewFromUrl)) {
       UI.navigate(viewFromUrl);
     }
   }
