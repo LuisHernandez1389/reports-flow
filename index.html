@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1117">
+<meta name="application-name" content="ProjectFlow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ProjectFlow">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<meta name="description" content="ProjectFlow - Gestión de proyectos y registro de trabajo diario">
+<link rel="manifest" href="manifest.json">
+<title>ProjectFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-locked">
+  <!-- AUTH GATE -->
+  <div class="auth-gate" id="authGate" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="icons/icon-192.png" class="auth-logo-img" alt="Logo ProjectFlow">
+        <span class="auth-logo-text">ProjectFlow</span>
+      </div>
+      <h2 id="authTitle">Acceso Modo Normal</h2>
+      <p class="auth-subtitle">Ingresa tus credenciales para continuar.</p>
+      <form id="authForm" class="auth-form">
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" id="authUser" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label>Contrasena</label>
+          <input type="password" id="authPass" autocomplete="current-password" required>
+        </div>
+        <p id="authError" class="auth-error"></p>
+        <button type="submit" class="btn-primary full-width">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <img src="icons/icon-192.png" class="logo-img" alt="Logo ProjectFlow">
+        <span class="logo-text">ProjectFlow</span>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-view="projects">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        <span>Proyectos</span>
+      </button>
+      <button class="nav-item" data-view="daily">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+        <span>Trabajo Diario</span>
+      </button>
+      <button class="nav-item" data-view="reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 17H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2h-2"/><path d="M9 17l3 3 3-3M12 12v8"/><path d="M8 9h8M8 13h4"/></svg>
+        <span>Reportes</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="date-display" id="currentDate"></div>
+      <div class="settings-row">
+        <button class="btn-settings" onclick="App.openSettings()" title="Configuración y datos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:15px;height:15px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Configuración
+        </button>
+        <button class="btn-settings" id="logoutBtn" onclick="Auth.logout()" title="Cerrar sesion">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:15px;height:15px"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Cerrar sesion
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <h1 class="page-title" id="pageTitle">Dashboard</h1>
+      <div class="topbar-actions">
+        <button class="btn-secondary" id="installAppBtn" title="Instalar app" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+          <span>Instalar</span>
+        </button>
+        <button class="btn-secondary" id="globalVoiceBtn" title="Asistente por voz">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 10.5a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+          <span>Voz IA</span>
+        </button>
+        <button class="btn-primary" id="quickAddBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Agregar</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- VIEWS -->
+    <div class="view-container">
+
+      <!-- DASHBOARD VIEW -->
+      <section class="view active" id="view-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></div>
+            <div class="stat-info">
+              <span class="stat-num" id="stat-projects">0</span>
+              <span class="stat-label">Proyectos Activos</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+            <div class="stat-info">
+              <span class="stat-num" id="stat-objectives">0</span>
+              <span class="stat-label">Objetivos Completados</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+            <div class="stat-info">
+              <span class="stat-num" id="stat-entries">0</span>
+              <span class="stat-label">Entradas esta Semana</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="stat-info">
+              <span class="stat-num" id="stat-hours">0h</span>
+              <span class="stat-label">Horas esta Semana</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>Proyectos Recientes</h3>
+              <button class="btn-ghost" data-view="projects">Ver todos</button>
+            </div>
+            <div id="dash-projects-list" class="dash-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Actividad Reciente</h3>
+              <button class="btn-ghost" data-view="daily">Ver todo</button>
+            </div>
+            <div id="dash-activity-list" class="dash-list"></div>
+          </div>
+        </div>
+
+        <div class="card full-width">
+          <div class="card-header">
+            <h3>Objetivos Por Entregar</h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span id="notifStatusBadge" class="today-badge"></span>
+              <button class="btn-secondary" id="enableNotificationsBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5"/><path d="M9 17a3 3 0 006 0"/></svg>
+                Activar notificaciones
+              </button>
+            </div>
+          </div>
+          <div id="dash-objectives-list" class="dash-list"></div>
+        </div>
+
+        <div class="card full-width">
+          <div class="card-header">
+            <h3>Progreso Semanal</h3>
+          </div>
+          <div class="weekly-chart" id="weeklyChart"></div>
+        </div>
+      </section>
+
+      <!-- PROJECTS VIEW -->
+      <section class="view" id="view-projects">
+        <div class="view-toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="projectSearch" placeholder="Buscar proyectos...">
+          </div>
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">Todos</button>
+            <button class="filter-tab" data-filter="active">Activos</button>
+            <button class="filter-tab" data-filter="completed">Completados</button>
+            <button class="filter-tab" data-filter="paused">Pausados</button>
+          </div>
+        </div>
+        <div id="projects-grid" class="projects-grid"></div>
+      </section>
+
+      <!-- PROJECT DETAIL VIEW -->
+      <section class="view" id="view-project-detail">
+        <button class="back-btn" id="backToProjects">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Volver a proyectos
+        </button>
+        <div id="project-detail-content"></div>
+      </section>
+
+      <!-- DAILY WORK VIEW -->
+      <section class="view" id="view-daily">
+        <div class="daily-layout">
+          <div class="daily-left">
+            <div class="card">
+              <div class="card-header">
+                <h3>Nueva Entrada</h3>
+                <span class="today-badge" id="todayDate"></span>
+              </div>
+              <form id="dailyForm" class="daily-form">
+                <div class="form-group">
+                  <label>Proyecto (opcional, soporte/imprevistos sin proyecto)</label>
+                  <select id="dailyProject">
+                    <option value="">— Sin proyecto asociado —</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Título de la tarea *</label>
+                  <input type="text" id="dailyTitle" placeholder="¿En qué trabajaste hoy?" required>
+                </div>
+                <div class="form-group">
+                  <label>Captura por voz (IA)</label>
+                  <div class="voice-tools">
+                    <button type="button" class="btn-secondary" id="dailyVoiceBtn">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 10.5a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+                      Dictar con voz
+                    </button>
+                    <span class="voice-status" id="dailyVoiceStatus">Listo para dictado</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Descripción detallada <button type="button" class="btn-ghost ai-fill-btn" id="aiDailyDescBtn">IA</button></label>
+                  <textarea id="dailyDescription" placeholder="Describe el trabajo realizado..." rows="4"></textarea>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="dailyDate">
+                  </div>
+                  <div class="form-group">
+                    <label>Horas trabajadas</label>
+                    <input type="number" id="dailyHours" min="0.5" max="24" step="0.5" placeholder="0">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Categoría</label>
+                  <div class="tag-options">
+                    <label class="tag-opt"><input type="radio" name="dailyCategory" value="desarrollo"> Desarrollo</label>
+                    <label class="tag-opt"><input type="radio" name="dailyCategory" value="diseño"> Diseño</label>
+                    <label class="tag-opt"><input type="radio" name="dailyCategory" value="reunión"> Reunión</label>
+                    <label class="tag-opt"><input type="radio" name="dailyCategory" value="investigación"> Investigación</label>
+                    <label class="tag-opt"><input type="radio" name="dailyCategory" value="otro" checked> Otro</label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Adjunto (imagen o PDF)</label>
+                  <div class="file-drop" id="dailyFileDrop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Arrastra una imagen o PDF, o <label for="dailyFile" class="file-link">selecciona</label></span>
+                    <input type="file" id="dailyFile" accept="image/*,.pdf" hidden>
+                  </div>
+                  <div id="dailyFilePreview"></div>
+                </div>
+                <button type="submit" class="btn-primary full-width">Guardar Entrada</button>
+              </form>
+            </div>
+          </div>
+          <div class="daily-right">
+            <div class="card">
+              <div class="card-header">
+                <h3>Registro de Trabajo</h3>
+                <div class="date-filter">
+                  <input type="date" id="filterDate">
+                  <button class="btn-ghost" id="clearDateFilter">Todos</button>
+                </div>
+              </div>
+              <div id="daily-entries-list" class="entries-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS VIEW -->
+      <section class="view" id="view-reports">
+        <div class="report-controls">
+          <div class="report-type-tabs">
+            <button class="report-tab active" data-report="daily">Reporte Diario</button>
+            <button class="report-tab" data-report="weekly">Reporte Semanal</button>
+            <button class="report-tab" data-report="project">Reporte de Proyecto</button>
+          </div>
+          <div class="report-actions">
+            <button class="btn-secondary" id="printReport">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Imprimir
+            </button>
+          </div>
+        </div>
+
+        <div id="report-daily-panel" class="report-panel active">
+          <div class="card">
+            <div class="card-header">
+              <h3>Reporte Diario</h3>
+              <input type="date" id="reportDailyDate">
+            </div>
+            <div id="report-daily-content"></div>
+          </div>
+        </div>
+
+        <div id="report-weekly-panel" class="report-panel">
+          <div class="card">
+            <div class="card-header">
+              <h3>Reporte Semanal</h3>
+              <div class="week-nav">
+                <button id="prevWeek" class="btn-icon">&#8249;</button>
+                <span id="weekLabel"></span>
+                <button id="nextWeek" class="btn-icon">&#8250;</button>
+              </div>
+            </div>
+            <div id="report-weekly-content"></div>
+          </div>
+        </div>
+
+        <div id="report-project-panel" class="report-panel">
+          <div class="card">
+            <div class="card-header">
+              <h3>Reporte de Proyecto</h3>
+              <select id="reportProjectSelect">
+                <option value="">Selecciona un proyecto</option>
+              </select>
+            </div>
+            <div id="report-project-content"></div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- end view-container -->
+  </main>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modalOverlay"></div>
+
+  <!-- PROJECT MODAL -->
+  <div class="modal" id="projectModal">
+    <div class="modal-header">
+      <h2 id="projectModalTitle">Nuevo Proyecto</h2>
+      <button class="modal-close" data-modal="projectModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="projectId">
+      <div class="form-group">
+        <label>Nombre del proyecto *</label>
+        <input type="text" id="projectName" placeholder="Nombre del proyecto" required>
+      </div>
+      <div class="form-group">
+        <label>Descripción <button type="button" class="btn-ghost ai-fill-btn" id="aiProjectDescBtn">IA</button></label>
+        <textarea id="projectDesc" rows="3" placeholder="¿De qué trata este proyecto?"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fecha inicio</label>
+          <input type="date" id="projectStart">
+        </div>
+        <div class="form-group">
+          <label>Fecha límite</label>
+          <input type="date" id="projectEnd">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Estado</label>
+        <select id="projectStatus">
+          <option value="active">Activo</option>
+          <option value="paused">Pausado</option>
+          <option value="completed">Completado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Color del proyecto</label>
+        <div class="color-picker" id="projectColorPicker">
+          <button class="color-btn active" data-color="#4F6EF7" style="background:#4F6EF7"></button>
+          <button class="color-btn" data-color="#22C55E" style="background:#22C55E"></button>
+          <button class="color-btn" data-color="#F59E0B" style="background:#F59E0B"></button>
+          <button class="color-btn" data-color="#EF4444" style="background:#EF4444"></button>
+          <button class="color-btn" data-color="#8B5CF6" style="background:#8B5CF6"></button>
+          <button class="color-btn" data-color="#06B6D4" style="background:#06B6D4"></button>
+          <button class="color-btn" data-color="#F97316" style="background:#F97316"></button>
+          <button class="color-btn" data-color="#EC4899" style="background:#EC4899"></button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Portada del proyecto</label>
+        <div class="file-drop" id="projectFileDrop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Imagen de portada — <label for="projectCover" class="file-link">seleccionar</label></span>
+          <input type="file" id="projectCover" accept="image/*" hidden>
+        </div>
+        <div id="projectCoverPreview"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" data-modal="projectModal">Cancelar</button>
+      <button class="btn-primary" id="saveProject">Guardar Proyecto</button>
+    </div>
+  </div>
+
+  <!-- OBJECTIVE MODAL -->
+  <div class="modal" id="objectiveModal">
+    <div class="modal-header">
+      <h2 id="objectiveModalTitle">Nuevo Objetivo</h2>
+      <button class="modal-close" data-modal="objectiveModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="objectiveId">
+      <input type="hidden" id="objectiveProjectId">
+      <div class="form-group">
+        <label>Título del objetivo *</label>
+        <input type="text" id="objectiveTitle" placeholder="¿Qué quieres lograr?" required>
+      </div>
+      <div class="form-group">
+        <label>Descripción <button type="button" class="btn-ghost ai-fill-btn" id="aiObjectiveDescBtn">IA</button></label>
+        <textarea id="objectiveDesc" rows="3" placeholder="Describe el objetivo en detalle..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prioridad</label>
+          <select id="objectivePriority">
+            <option value="low">Baja</option>
+            <option value="medium" selected>Media</option>
+            <option value="high">Alta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha límite</label>
+          <input type="date" id="objectiveDeadline">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" data-modal="objectiveModal">Cancelar</button>
+      <button class="btn-primary" id="saveObjective">Guardar Objetivo</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS MODAL -->
+  <div class="modal" id="progressModal">
+    <div class="modal-header">
+      <h2>Registrar Avance</h2>
+      <button class="modal-close" data-modal="progressModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="progressObjectiveId">
+      <input type="hidden" id="progressProjectId">
+      <div class="form-group">
+        <label>Descripción del avance *</label>
+        <textarea id="progressDesc" rows="4" placeholder="Describe el avance logrado..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Porcentaje de avance</label>
+        <div class="progress-input-group">
+          <input type="range" id="progressPercent" min="0" max="100" step="5" value="50">
+          <span id="progressPercentLabel">50%</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Horas invertidas *</label>
+        <input type="number" id="progressHours" min="0.5" max="24" step="0.5" placeholder="0" required>
+      </div>
+      <div class="form-group">
+        <label>Evidencia (imagen o PDF)</label>
+        <div class="file-drop" id="progressFileDrop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Sube evidencia del avance (imagen/PDF) — <label for="progressFile" class="file-link">seleccionar</label></span>
+          <input type="file" id="progressFile" accept="image/*,.pdf" hidden>
+        </div>
+        <div id="progressFilePreview"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" data-modal="progressModal">Cancelar</button>
+      <button class="btn-primary" id="saveProgress">Guardar Avance</button>
+    </div>
+  </div>
+
+  <!-- QUICK ADD MODAL -->
+  <div class="modal" id="quickAddModal">
+    <div class="modal-header">
+      <h2>¿Qué deseas agregar?</h2>
+      <button class="modal-close" data-modal="quickAddModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="quick-add-options">
+        <button class="quick-opt" id="qa-project">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+          <span>Nuevo Proyecto</span>
+        </button>
+        <button class="quick-opt" id="qa-daily">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span>Entrada Diaria</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-header">
+      <h2>Configuración y Datos</h2>
+      <button class="modal-close" data-modal="settingsModal">✕</button>
+    </div>
+    <div class="modal-body">
+      
+      <div class="settings-section">
+        <p class="settings-section-title">Supabase (Base de datos y fotos)</p>
+        <p class="settings-desc">Configura Supabase para guardar datos e imagenes en la nube.</p>
+        <div class="form-group">
+          <label>Project URL</label>
+          <input type="text" id="sbUrl" placeholder="https://xxxx.supabase.co">
+        </div>
+        <div class="form-group">
+          <label>Publishable Key</label>
+          <input type="text" id="sbKey" placeholder="sb_publishable_...">
+        </div>
+        <div class="form-group">
+          <label>Bucket</label>
+          <input type="text" id="sbBucket" placeholder="projectflow-uploads">
+        </div>
+        <div class="form-group">
+          <label>Ollama API Key (voz IA)</label>
+          <input type="password" id="ollamaKey" placeholder="ollama key">
+        </div>
+        <div class="form-group">
+          <label>Ollama Model</label>
+          <input type="text" id="ollamaModel" placeholder="gpt-oss:120b">
+        </div>
+        <div class="settings-row" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-secondary" onclick="SupabaseStorage.saveFromInputs()">Guardar Supabase</button>
+          <button class="btn-secondary" onclick="SupabaseData.syncNow().then(c=>SupabaseStorage.setStatus('Sync OK · projects:'+c.pf_projects+' objectives:'+c.pf_objectives+' progress:'+c.pf_progress+' daily:'+c.pf_daily)).catch(e=>SupabaseStorage.setStatus('Error sync: '+(e?.message||e),true))">Sincronizar ahora</button>
+          <button class="btn-ghost" onclick="SupabaseData.getCounts().then(c=>SupabaseStorage.setStatus('Conteos nube · projects:'+c.pf_projects+' objectives:'+c.pf_objectives+' progress:'+c.pf_progress+' daily:'+c.pf_daily)).catch(e=>SupabaseStorage.setStatus('Error verificacion: '+(e?.message||e),true))">Verificar nube</button>
+          <button class="btn-ghost" onclick="SupabaseStorage.clearFromUI()">Restaurar config</button>
+        </div>
+        <p class="settings-desc" id="sbStatus" style="margin-top:8px"></p>
+      </div>
+
+      <div class="settings-section">
+        <p class="settings-section-title">Notificaciones de entregas</p>
+        <p class="settings-desc">Activa recordatorios de objetivos por vencer y prueba notificaciones al instante.</p>
+        <div class="settings-row" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-secondary" id="notifEnableSettingsBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="width:16px;height:16px"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5"/><path d="M9 17a3 3 0 006 0"/></svg>
+            Activar
+          </button>
+          <button class="btn-ghost" id="notifDisableSettingsBtn">Desactivar</button>
+          <button class="btn-secondary" id="notifTestSettingsBtn">Probar notificacion</button>
+          <button class="btn-ghost" id="notifCheckDueSettingsBtn">Probar entregas</button>
+          <button class="btn-ghost" id="notifDiagSettingsBtn">Diagnosticar</button>
+        </div>
+        <p class="settings-desc" id="notifSettingsStatus"></p>
+      </div>
+      <div class="settings-section">
+        <p class="settings-section-title">Datos de ejemplo</p>
+        <p class="settings-desc">Carga proyectos y entradas de demostración para explorar la app.</p>
+        <button class="btn-secondary full-btn" onclick="DataUtils.seedDemo();UI.closeModal('settingsModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Cargar datos de demostración
+        </button>
+      </div>
+      <div class="settings-section">
+        <p class="settings-section-title">Exportar datos</p>
+        <p class="settings-desc">Descarga una copia de todos tus datos en formato JSON.</p>
+        <button class="btn-secondary full-btn" onclick="DataUtils.exportData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar como JSON
+        </button>
+      </div>
+      <div class="settings-section">
+        <p class="settings-section-title">Importar datos</p>
+        <p class="settings-desc">Restaura datos desde un archivo JSON exportado anteriormente.</p>
+        <label class="btn-secondary full-btn" style="cursor:pointer;justify-content:center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importar desde JSON
+          <input type="file" accept=".json" id="importFileInput" hidden>
+        </label>
+      </div>
+      <div class="settings-section" style="border-top:1px solid var(--border);padding-top:16px">
+        <p class="settings-section-title" style="color:var(--red)">Zona de peligro</p>
+        <p class="settings-desc">Esta acción eliminará permanentemente todos tus datos.</p>
+        <button class="btn-danger full-btn" onclick="DataUtils.clearAll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          Eliminar todos los datos
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
+  <div class="modal" id="confirmModal">
+    <div class="modal-header">
+      <h2 id="confirmModalTitle">Confirmar accion</h2>
+      <button class="modal-close" id="confirmModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmModalMessage" style="font-size:14px;color:var(--text-secondary);line-height:1.6"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="confirmModalCancel">Cancelar</button>
+      <button class="btn-primary" id="confirmModalOk">Confirmar</button>
+    </div>
+  </div>
+
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-storage.js"></script>
+  <script src="js/supabase-data.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/projects.js"></script>
+  <script src="js/daily.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/data-utils.js"></script>
+  <script src="js/ai-voice.js"></script>
+  <script src="js/voice-automation.js"></script>
+  <script src="js/ai-descriptions.js"></script>
+  <script src="js/deadline-notifications.js"></script>
+  <script src="js/mode.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
