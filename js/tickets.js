@@ -8,6 +8,7 @@ const Tickets = (() => {
     url: 'https://kpefwyirteartbfxrusb.supabase.co',
     key: ''
   };
+  const AUTO_REFRESH_MS = 15000;
 
   let cache = [];
   let filterStatus = 'all';
@@ -15,6 +16,10 @@ const Tickets = (() => {
   let lastError = '';
   let lastStep = 'init';
   const debugLog = [];
+  let pollTimer = null;
+  let fetchInFlight = false;
+  let lastFetchAt = 0;
+  let realtime = { client: null, channel: null, sig: '' };
 
   function isReadOnly() {
     return !!window.AppMode?.isReadOnly?.();
@@ -22,6 +27,14 @@ const Tickets = (() => {
 
   function parseJson(raw, fallback) {
     try { return JSON.parse(raw || ''); } catch { return fallback; }
+  }
+
+  function cfgSignature(cfg) {
+    return `${String(cfg?.url || '').trim()}|${String(cfg?.key || '').trim()}`;
+  }
+
+  function isTicketsViewActive() {
+    return window._currentView === 'tickets';
   }
 
   function getCfg() {
@@ -206,61 +219,72 @@ const Tickets = (() => {
   }
 
   async function fetchTickets() {
+    if (fetchInFlight) {
+      pushLog('warn', 'fetchTickets ignorado porque ya hay una carga en progreso', { step: lastStep });
+      return cache;
+    }
+    fetchInFlight = true;
     lastStep = 'fetchTickets';
     lastError = '';
     pushLog('info', 'Inicio de carga de tickets', { step: lastStep });
 
-    const client = getClient();
-    if (!client) {
-      lastError = 'Falta configurar URL y Publishable Key de Tickets.';
-      pushLog('error', 'Configuracion incompleta para Tickets', {
+    try {
+      const client = getClient();
+      if (!client) {
+        lastError = 'Falta configurar URL y Publishable Key de Tickets.';
+        pushLog('error', 'Configuracion incompleta para Tickets', {
+          step: lastStep,
+          cfg: { url: getCfg().url, keyPreview: shortKey(getCfg().key) }
+        });
+        setStatus(lastError, true);
+        cache = [];
+        render();
+        return [];
+      }
+
+      lastStep = 'query:tickets.select';
+      pushLog('info', 'Ejecutando query a tabla tickets', {
         step: lastStep,
-        cfg: { url: getCfg().url, keyPreview: shortKey(getCfg().key) }
+        orderBy: 'updated_at desc',
+        limit: 300
       });
-      setStatus(lastError, true);
-      cache = [];
-      render();
-      return [];
-    }
 
-    lastStep = 'query:tickets.select';
-    pushLog('info', 'Ejecutando query a tabla tickets', {
-      step: lastStep,
-      orderBy: 'updated_at desc',
-      limit: 300
-    });
+      const { data, error } = await client
+        .from('tickets')
+        .select('id, code, title, description, status, priority, category, client_name, department, agent_name, created_at, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(300);
 
-    const { data, error } = await client
-      .from('tickets')
-      .select('id, code, title, description, status, priority, category, client_name, department, agent_name, created_at, updated_at')
-      .order('updated_at', { ascending: false })
-      .limit(300);
+      if (error) {
+        lastError = serializeError(error);
+        pushLog('error', 'Error en query de tickets', {
+          step: lastStep,
+          error: {
+            message: error.message,
+            code: error.code,
+            hint: error.hint,
+            details: error.details
+          }
+        });
+        setStatus(`Error tickets: ${lastError}`, true);
+        cache = [];
+        render();
+        throw error;
+      }
 
-    if (error) {
-      lastError = serializeError(error);
-      pushLog('error', 'Error en query de tickets', {
+      cache = Array.isArray(data) ? data : [];
+      lastFetchAt = Date.now();
+      pushLog('info', 'Tickets cargados correctamente', {
         step: lastStep,
-        error: {
-          message: error.message,
-          code: error.code,
-          hint: error.hint,
-          details: error.details
-        }
+        rows: cache.length,
+        fetchedAt: new Date(lastFetchAt).toISOString()
       });
-      setStatus(`Error tickets: ${lastError}`, true);
-      cache = [];
+      setStatus(`Tickets cargados: ${cache.length}`);
       render();
-      throw error;
+      return cache;
+    } finally {
+      fetchInFlight = false;
     }
-
-    cache = Array.isArray(data) ? data : [];
-    pushLog('info', 'Tickets cargados correctamente', {
-      step: lastStep,
-      rows: cache.length
-    });
-    setStatus(`Tickets cargados: ${cache.length}`);
-    render();
-    return cache;
   }
 
   async function verifyConnection() {
@@ -310,6 +334,7 @@ const Tickets = (() => {
       keyPreview: shortKey(key)
     });
     setStatus('Configuracion de Tickets guardada.');
+    setupRealtime();
   }
 
   function bindEvents() {
@@ -385,6 +410,77 @@ const Tickets = (() => {
         });
       });
     }
+    setupRealtime();
+  }
+
+  function stopAutoRefresh() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+      pushLog('info', 'Auto-refresh detenido', {});
+    }
+  }
+
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    pollTimer = setInterval(() => {
+      if (!isTicketsViewActive()) return;
+      if (document.visibilityState === 'hidden') return;
+      pushLog('info', 'Auto-refresh tick', {
+        ms: AUTO_REFRESH_MS,
+        lastFetchAgoMs: lastFetchAt ? (Date.now() - lastFetchAt) : null
+      });
+      fetchTickets().catch((err) => {
+        pushLog('error', 'Fallo en auto-refresh tick', { error: serializeError(err) });
+      });
+    }, AUTO_REFRESH_MS);
+    pushLog('info', 'Auto-refresh iniciado', { everyMs: AUTO_REFRESH_MS });
+  }
+
+  function teardownRealtime() {
+    try {
+      if (realtime.client && realtime.channel) {
+        realtime.client.removeChannel(realtime.channel);
+      }
+    } catch (_) {}
+    realtime = { client: null, channel: null, sig: '' };
+  }
+
+  function setupRealtime() {
+    const cfg = getCfg();
+    const sig = cfgSignature(cfg);
+    if (!cfg.url || !cfg.key || !window.supabase?.createClient) return;
+    if (realtime.channel && realtime.sig === sig) return;
+
+    teardownRealtime();
+    try {
+      const client = window.supabase.createClient(cfg.url, cfg.key, {
+        auth: { persistSession: false }
+      });
+      const channel = client
+        .channel('projectflow-tickets-live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, (payload) => {
+          pushLog('info', 'Cambio realtime detectado en tickets', {
+            event: payload?.eventType || 'unknown',
+            code: payload?.new?.code || payload?.old?.code || null
+          });
+          if (isTicketsViewActive()) {
+            fetchTickets().catch((err) => {
+              pushLog('error', 'Fallo recarga por evento realtime', { error: serializeError(err) });
+            });
+          } else {
+            setStatus('Hay cambios nuevos en Tickets. Abre la pestaña para refrescar.');
+          }
+        })
+        .subscribe((status) => {
+          pushLog('info', 'Estado realtime tickets', { status });
+        });
+
+      realtime = { client, channel, sig };
+      pushLog('info', 'Realtime de tickets inicializado', { url: cfg.url });
+    } catch (err) {
+      pushLog('error', 'No se pudo inicializar realtime de tickets', { error: serializeError(err) });
+    }
   }
 
   function init() {
@@ -392,6 +488,18 @@ const Tickets = (() => {
     pushLog('info', 'Inicializando modulo Tickets', { step: lastStep });
     fillSettingsForm();
     bindEvents();
+    startAutoRefresh();
+    setupRealtime();
+    window.addEventListener('focus', () => {
+      if (!isTicketsViewActive()) return;
+      pushLog('info', 'Window focus: refrescando tickets', {});
+      fetchTickets().catch((err) => pushLog('error', 'Fallo refresh en focus', { error: serializeError(err) }));
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !isTicketsViewActive()) return;
+      pushLog('info', 'Visibility visible: refrescando tickets', {});
+      fetchTickets().catch((err) => pushLog('error', 'Fallo refresh en visibilitychange', { error: serializeError(err) }));
+    });
     if (isReadOnly()) {
       const saveBtn = document.getElementById('saveTicketsCfgBtn');
       if (saveBtn) saveBtn.style.display = 'none';
